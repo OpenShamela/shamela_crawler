@@ -1,0 +1,3 @@
+[tools]
+poetry = {version='latest', pyproject='pyproject.toml'}
+python = '3.12'
