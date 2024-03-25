@@ -1,3 +1,7 @@
 [tools]
 poetry = {version='latest', pyproject='pyproject.toml'}
 python = '3.12'
+
+[tasks.lint]
+description = 'Run pre-commit hooks'
+run = 'pre-commit run --all-files'
