@@ -8,7 +8,7 @@ from scrapy import Field, Item
 class BookItem(Item):
     id = Field()
     title = Field()
-    author = Field()
+    author_id = Field()
     description = Field()
     category = Field()
 
@@ -16,3 +16,9 @@ class BookItem(Item):
 class CategoryItem(Item):
     id = Field()
     name = Field()
+
+
+class AuthorItem(Item):
+    id = Field()
+    name = Field()
+    bio = Field()

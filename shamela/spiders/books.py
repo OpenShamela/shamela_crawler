@@ -13,12 +13,12 @@ class Books(CrawlSpider):
 
     rules = (Rule(LinkExtractor(allow=r'category/'), callback='parse_item', follow=True),)
 
-    def parse_item(self, response: Response) -> Generator[dict[str, str], None, None]:
+    def parse_item(self, response: Response) -> Generator[dict[str, str | int], None, None]:
         for book in response.css('.book_item'):
             yield {
                 'title': book.css('a.book_title::text').get(),
-                'author': book.css('a.text-gray::text').get(),
+                'author_id': int(book.css('a.text-gray::attr(href)').get().split('/')[-1]),
                 'category': ' '.join(response.css('h1::text').get().split()[1:]),
                 'description': book.css('p.des::text').get().replace('\r', '\n'),
-                'id': book.css('a.book_title::attr(href)').get().split('/')[-1],
+                'id': int(book.css('a.book_title::attr(href)').get().split('/')[-1]),
             }

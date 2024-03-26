@@ -20,17 +20,31 @@ class Category(Base):
         return f'<Category {self.name}>'
 
 
+class Author(Base):
+    __tablename__ = 'authors'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    bio = Column(String)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def __repr__(self) -> str:
+        return f'<Author {self.name}>'
+
+
 class Book(Base):
     __tablename__ = 'books'
 
     id = Column(Integer, primary_key=True)
     title = Column(String)
-    author = Column(String)
+    author_id = Column(Integer, ForeignKey('authors.id'))
     description = Column(String)
     category_id = Column(Integer, ForeignKey('categories.id'))
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
+    author = relationship('Author', backref='books')
     category = relationship('Category', backref='books')
 
     @property
