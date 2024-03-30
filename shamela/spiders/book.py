@@ -217,7 +217,7 @@ class Book(Spider):
         }
         data['info']['toc'] = self._cut_toc(data['info']['toc'], start_end)
         data['info']['volumes'] = {self.vol: start_end}
-        data['info']['title'] = f"{data['info']['title']} - {self.vol}"
+        data['info']['title'] = f"{data['info']['title']}{' - ' if self.vol else ''}{self.vol}"
         return data
 
     @staticmethod
