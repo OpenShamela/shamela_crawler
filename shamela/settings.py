@@ -96,3 +96,6 @@ FEED_EXPORT_ENCODING = 'utf-8'
 EXTENSIONS = {
     'shamela.progress_bar.ProgressBarExtension': 500,
 }
+FEED_EXPORTERS = {
+    'json': 'shamela.exporters.SortedJsonItemExporter',
+}
