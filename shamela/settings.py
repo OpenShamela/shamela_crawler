@@ -12,7 +12,6 @@ BOT_NAME = 'shamela'
 SPIDER_MODULES = ['shamela.spiders']
 NEWSPIDER_MODULE = 'shamela.spiders'
 
-
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = "shamela (+http://www.yourdomain.com)"
 
@@ -92,3 +91,8 @@ HTTPCACHE_GZIP = True
 REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
 TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
 FEED_EXPORT_ENCODING = 'utf-8'
+
+# Custom
+EXTENSIONS = {
+    'shamela.progress_bar.ProgressBarExtension': 500,
+}
