@@ -1,12 +1,12 @@
 import json
 from io import BytesIO
-from typing import Any
+from typing import Any, BinaryIO
 
 from scrapy.exporters import JsonItemExporter
 
 
 class SortedJsonItemExporter(JsonItemExporter):
-    def __init__(self, file: BytesIO, **kwargs: Any) -> None:
+    def __init__(self, file: BytesIO | BinaryIO, **kwargs: Any) -> None:
         super().__init__(file, **kwargs)
         self._items: list[dict[str, Any]] = []
 

@@ -6,14 +6,18 @@
 import logging
 from collections.abc import Callable
 from functools import wraps
+from io import BufferedWriter
+from pathlib import Path
 from typing import Any, TypeVar, cast
 
 from scrapy import Spider
+from scrapy.exporters import BaseItemExporter
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from shamela.db import Author, Base, Book, Category
+from shamela.exporters import SortedJsonItemExporter
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -24,7 +28,7 @@ def commit_session(func: F) -> F:
     counter = 0
 
     @wraps(func)
-    def wrapped_func(self: 'ShamelaPipeline', session: Session, *args: Any, **kwargs: Any) -> Any:
+    def wrapped_func(self: 'DatabasePipeline', session: Session, *args: Any, **kwargs: Any) -> Any:
         nonlocal counter
         result = func(self, session, *args, **kwargs)
         counter += 1
@@ -41,7 +45,7 @@ def commit_session(func: F) -> F:
     return cast(F, wrapped_func)
 
 
-class ShamelaPipeline:
+class DatabasePipeline:
     def open_spider(self, spider: Spider) -> None:
         self.engine = create_engine('sqlite:///shamela.db')
         Base.metadata.create_all(self.engine)
@@ -99,4 +103,28 @@ class ShamelaPipeline:
             self._handle_author(self.session, item)
         if spider.name == 'books':
             self._handle_book(self.session, item)
+        return item
+
+
+class BookExportPipeline:
+    def __init__(self) -> None:
+        self.exporter: BaseItemExporter | None = None
+        self.file: BufferedWriter | None = None
+
+    def close_spider(self, spider: Spider) -> None:
+        if self.exporter:
+            self.exporter.finish_exporting()
+        if self.file:
+            self.file.close()
+
+    def process_item(self, item: dict[str, Any], spider: Spider) -> dict[str, Any]:
+        if spider.name != 'book' or 'info' not in item or self.file:
+            return item
+
+        file = Path(f"{item['info']['title']}.json")
+        if file.exists():
+            file.unlink(missing_ok=True)
+        self.file = file.open('wb')
+        self.exporter = SortedJsonItemExporter(self.file)
+        self.exporter.export_item(item)
         return item

@@ -62,7 +62,8 @@ COOKIES_ENABLED = False
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'shamela.pipelines.ShamelaPipeline': 300,
+    'shamela.pipelines.BookExportPipeline': 1,
+    'shamela.pipelines.DatabasePipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
