@@ -57,4 +57,5 @@ cython_debug/
 .mise.local.toml
 *.db*
 *.json
+*.epub
 *.log

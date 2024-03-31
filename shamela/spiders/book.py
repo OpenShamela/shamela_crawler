@@ -58,6 +58,8 @@ class Book(Spider):
                 'title': response.css(Selectors.TITLE.value).get(),
                 'author': response.css(Selectors.AUTHOR.value).get(),
                 'about': self.PARENT_DIV_CLASS_PATTERN.sub('', html.get()),
+                'url': response.url,
+                'id': self.book_id,
                 'toc': toc,
                 'page_chapters': page_chapters,
             }
@@ -77,8 +79,8 @@ class Book(Spider):
         page_number = int(response.url.split('/')[-1])
         page = int(response.css(f'{Selectors.PAGE_NUMBER.value}::attr(value)').get('0'))
         data = response.meta['data']
-        if 'text' not in data:
-            data['text'] = []
+        if 'pages' not in data:
+            data['pages'] = []
 
         if page_number == 1:
             data['info']['all_pages'] = int(
@@ -108,7 +110,7 @@ class Book(Spider):
         # Check if the current page is the last page of the volume
         if self.vol and page_number > data['info']['volumes'][self.vol][1]:
             data = self._update_data_for_one_volume(data, data['info']['volumes'][self.vol])
-            data['info']['pages'] = len(data['text'])
+            data['info']['pages'] = len(data['pages'])
             yield data
             return
 
@@ -123,11 +125,11 @@ class Book(Spider):
         for _ in html.css('p[style="font-size: 15px"]'):
             _ = Selector(text=self.HTML_STYLE_PATTERN.sub('', html.get()))
 
-        data['text'].append(
+        data['pages'].append(
             {
                 'page_number': page_number,
                 'page': page,
-                'text': html.get(),
+                'text': html.css('div').get(),
                 # 'html': response.css('.padding-top-20 .container').get()
             }
         )
@@ -136,7 +138,7 @@ class Book(Spider):
         if not response.css(Selectors.LAST_PAGE.value):
             if self.vol and page_number == data['info']['volumes'][self.vol][1]:
                 data = self._update_data_for_one_volume(data, data['info']['volumes'][self.vol])
-            data['info']['pages'] = len(data['text'])
+            data['info']['pages'] = len(data['pages'])
             yield data
         else:
             yield response.follow(
