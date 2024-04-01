@@ -277,11 +277,16 @@ class EpubItemExporter(BaseItemExporter):
             if chapters_in_page := info['page_chapters'].get(page['page_number']):
                 page_title = chapters_in_page[0]
             # get page volume
-            page_volume = next(
-                (k for k, v in info['volumes'].items() if v[0] <= page['page'] <= v[1]), ''
+            page_volume_idx, page_volume = next(
+                (
+                    (index, k)
+                    for index, (k, v) in enumerate(info['volumes'].items())
+                    if v[0] <= page['page'] <= v[1]
+                ),
+                (1, ''),
             )
             page_filename = (
-                f"page{'_' if page_volume else ''}{page_volume or ''}_"
+                f"page{'_' if page_volume else ''}{page_volume_idx}_"
                 f"{str(page['page_number']).zfill(self._zfill_length)}.xhtml"
             )
             footer = ''
