@@ -12,6 +12,7 @@ Scrapy = "^2.11.1"
 sqlalchemy = "^2.0.29"
 alembic = "^1.13.1"
 tqdm = "^4.66.2"
+ebooklib = "^0.18"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6.2"

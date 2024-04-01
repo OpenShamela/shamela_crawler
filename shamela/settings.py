@@ -101,5 +101,5 @@ EXTENSIONS = {
     'shamela.progress_bar.ProgressBarExtension': 500,
 }
 FEED_EXPORTERS = {
-    'json': 'shamela.exporters.SortedJsonItemExporter',
+    'json': 'shamela.exporters.json.SortedJsonItemExporter',
 }
