@@ -96,6 +96,11 @@ REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
 TWISTED_REACTOR = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
 FEED_EXPORT_ENCODING = 'utf-8'
 
+# Retry
+RETRY_ENABLED = True
+RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429, 525]
+RETRY_TIMES = 5
+
 # Custom
 EXTENSIONS = {
     'shamela.progress_bar.ProgressBarExtension': 500,
