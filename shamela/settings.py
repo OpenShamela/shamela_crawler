@@ -24,7 +24,7 @@ CONCURRENT_REQUESTS = 64
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-# DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 0.25
 # The download delay setting will honor only one of:
 CONCURRENT_REQUESTS_PER_DOMAIN = 64
 # CONCURRENT_REQUESTS_PER_IP = 16
@@ -99,7 +99,12 @@ FEED_EXPORT_ENCODING = 'utf-8'
 # Retry
 RETRY_ENABLED = True
 RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429, 525]
-RETRY_TIMES = 5
+RETRY_TIMES = 10
+
+# HTTP/2
+DOWNLOAD_HANDLERS = {
+    'https': 'scrapy.core.downloader.handlers.http2.H2DownloadHandler',
+}
 
 # Custom
 EXTENSIONS = {
