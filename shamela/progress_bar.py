@@ -4,6 +4,8 @@ from scrapy.http import Response
 from scrapy.statscollectors import StatsCollector
 from tqdm import tqdm
 
+from shamela.utils import get_number_from_url
+
 
 class ProgressBarExtension:
     def __init__(self, stats: StatsCollector) -> None:
@@ -42,7 +44,7 @@ class ProgressBarExtension:
             and self.progress_bar.total == 1
             and spider.name == 'book'
             and 'data' in response.meta
-            and int(response.url.split('/')[-1]) > 1
+            and get_number_from_url(response.url) > 1
         ):
             self.progress_bar.total = response.meta['data']['info']['all_pages']
         self.update_progress_bar()

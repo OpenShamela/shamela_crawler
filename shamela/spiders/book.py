@@ -9,6 +9,8 @@ from scrapy.http import Response
 from scrapy.selector import SelectorList
 from scrapy.spiders import Spider
 
+from shamela.utils import get_number_from_url
+
 TocType = list[dict[str, Any] | list[dict[str, Any]]]
 
 
@@ -76,7 +78,7 @@ class Book(Spider):
         :param kwargs:
         :return:
         """
-        page_number = int(response.url.split('/')[-1])
+        page_number = get_number_from_url(response.url)
         page = int(response.css(f'{Selectors.PAGE_NUMBER.value}::attr(value)').get('0'))
         data = response.meta['data']
         if 'pages' not in data:
@@ -157,7 +159,7 @@ class Book(Spider):
         item: Selector
         for item in toc:
             link = {
-                'page': int(item.css('a::attr(href)').get().split('/')[-1]),
+                'page': get_number_from_url(item.css('a::attr(href)').get()),
                 'text': item.css('a::text').get(''),
             }
             ul_list: SelectorList = item.css('li ul')
@@ -176,7 +178,7 @@ class Book(Spider):
         """
         chapters: dict = {}
         for chapter in chapters_list:
-            chapter_page = int(chapter.css('::attr(href)').get().split('/')[-1])
+            chapter_page = get_number_from_url(chapter.css('::attr(href)').get())
             if chapter_page not in chapters:
                 chapters[chapter_page] = []
             chapters[chapter_page].append(chapter.css('::text').get('').strip())

@@ -4,6 +4,8 @@ from typing import Any, ClassVar
 from scrapy import Spider
 from scrapy.http import Response
 
+from shamela.utils import get_number_from_url
+
 
 class CategoriesSpider(Spider):
     name = 'categories'
@@ -15,6 +17,6 @@ class CategoriesSpider(Spider):
     ) -> Generator[dict[str, str | int], None, None]:
         for category in response.css('.cat_title'):
             yield {
-                'id': int(category.css('::attr(href)').get().split('/')[-1]),
+                'id': get_number_from_url(category.css('::attr(href)').get()),
                 'name': ' '.join(category.css('::text').get().split()[1:]),
             }

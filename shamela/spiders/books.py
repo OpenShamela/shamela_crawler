@@ -5,6 +5,8 @@ from scrapy.http import Response
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 
+from shamela.utils import get_number_from_url
+
 
 class Books(CrawlSpider):
     name = 'books'
@@ -17,8 +19,8 @@ class Books(CrawlSpider):
         for book in response.css('.book_item'):
             yield {
                 'title': book.css('a.book_title::text').get(),
-                'author_id': int(book.css('a.text-gray::attr(href)').get().split('/')[-1]),
+                'author_id': get_number_from_url(book.css('a.text-gray::attr(href)').get()),
                 'category': ' '.join(response.css('h1::text').get().split()[1:]),
                 'description': book.css('p.des::text').get().replace('\r', '\n'),
-                'id': int(book.css('a.book_title::attr(href)').get().split('/')[-1]),
+                'id': get_number_from_url(book.css('a.book_title::attr(href)').get()),
             }
