@@ -149,12 +149,15 @@ class Book(Spider):
                 meta={'data': data},
             )
 
-    def _parse_toc(self, toc: SelectorList) -> TocType:
+    def _parse_toc(self, toc: SelectorList, seen: set | None = None) -> TocType:
         """
-        Parse the table of contents into a list of dictionaries
+        Parse the table of contents into a list of dictionaries and sub-lists
         :param toc: table of contents
+        :param seen: set of seen links
         :return: list of dictionaries
         """
+        if seen is None:
+            seen = set()
         toc_list: list = []
         item: Selector
         for item in toc:
@@ -162,9 +165,13 @@ class Book(Spider):
                 'page': get_number_from_url(item.css('a::attr(href)').get()),
                 'text': item.css('a::text').get(''),
             }
-            ul_list: SelectorList = item.css('li ul')
-            if ul_list:
-                toc_list.append([link, self._parse_toc(ul_list.css('ul li'))])
+            # Convert the dictionary to a tuple, so it can be added to a set
+            link_tuple = tuple(link.items())
+            if link_tuple in seen:
+                continue  # Skip this item if it has been seen before
+            seen.add(link_tuple)
+            if ul_list := item.css('ul > li'):
+                toc_list.append([link, self._parse_toc(ul_list, seen)])
             else:
                 toc_list.append(link)
         return toc_list
