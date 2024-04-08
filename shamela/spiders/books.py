@@ -25,5 +25,8 @@ class Books(CrawlSpider):
                 'pages': int(
                     book.css('p.des::text').re_first(r'عدد الصفحات: ([\u0660-\u0669]+)') or -1
                 ),
+                'volumes': int(
+                    book.css('p.des::text').re_first(r'عدد الأجزاء: ([\u0660-\u0669]+)') or 1
+                ),
                 'id': get_number_from_url(book.css('a.book_title::attr(href)').get()),
             }

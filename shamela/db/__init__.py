@@ -40,6 +40,7 @@ class Book(Base):
     title = Column(String)
     author_id = Column(Integer, ForeignKey('authors.id'))
     description = Column(String)
+    volumes = Column(Integer, default=1)
     pages = Column(Integer)
     category_id = Column(Integer, ForeignKey('categories.id'))
     created_at = Column(DateTime, default=datetime.now)
