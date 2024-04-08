@@ -53,7 +53,7 @@ class DatabasePipeline:
         self.engine = create_engine('sqlite:///shamela.db')
         Base.metadata.create_all(self.engine)
         self.session = sessionmaker(bind=self.engine)()
-        self.book_update_fields = ['title', 'author_id', 'description']
+        self.book_update_fields = ['title', 'author_id', 'description', 'pages']
         self.author_update_fields = ['name', 'bio']
 
     def close_spider(self, spider: Spider) -> None:
