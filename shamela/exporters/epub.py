@@ -1,5 +1,6 @@
 import re
 from copy import deepcopy
+from html import unescape
 from io import BytesIO
 from re import Pattern
 from typing import Any, BinaryIO
@@ -122,60 +123,75 @@ class EpubItemExporter(BaseItemExporter):
             hamesh_items.update({current_hamesh: new_footnote_aside})
         return hamesh_items
 
-    def _update_hamesh(self, content: Selector, hamesh_items: dict[str, Element]) -> Selector:
-        footnote_count = 1
+    @staticmethod
+    def _is_aya_match(text: str, match: re.Match, number: str) -> bool:
+        aya_match = ARABIC_NUMBER_BETWEEN_CURLY_BRACES_PATTERN.search(text)
+        return bool(
+            aya_match
+            and number in aya_match.group()
+            # number is inside aya
+            and match.start('number') > aya_match.start()
+        )
+
+    @staticmethod
+    def _create_footnote_link(footnote_count: int, number: str) -> Element:
+        footnote_link: Element = Element(
+            'a',
+            {
+                'href': f'#fn{footnote_count}',
+                EPUB_TYPE: 'noteref',
+                'role': 'doc-noteref',
+                'id': f'fnref{footnote_count}',
+                # "title": f"هامش {footnote_count}",
+                'class': 'fn nu',
+            },
+        )
+        footnote_link.text = number
+        return footnote_link
+
+    def _update_hamesh(self, content: Selector) -> Selector:
         hamesh: SelectorList = content.css('.hamesh')
         if not hamesh:
             return content
+        footnote_count = 1
+        hamesh_items: dict[str, Element] = self._get_hamesh_items(content)
         new_hamesh: Element = Element('div', {'class': 'hamesh'})
-        parent: SelectorList = content.css('div')
         p_elements: SelectorList = content.css('p:not(.hamesh)')
+        p_replacements = []
         for p in p_elements:
-            matches = ARABIC_NUMBER_BETWEEN_BRACKETS_PATTERN.finditer(p.get())
+            p_text = p.get()
+            matches = ARABIC_NUMBER_BETWEEN_BRACKETS_PATTERN.finditer(p_text)
+            replacements = []
             for match in matches:
                 number = match.group('number')
                 if hamesh_items.get(number) is None:
                     continue
-                aya_match = ARABIC_NUMBER_BETWEEN_CURLY_BRACES_PATTERN.search(p.get())
-                if (
-                    aya_match
-                    and number in aya_match.group()
-                    # number in inside aya
-                    and match.start('number') > aya_match.start()
-                ):
+                if self._is_aya_match(p_text, match, number):
                     continue
-                footnote_link: Element = Element(
-                    'a',
-                    {
-                        'href': f'#fn{footnote_count}',
-                        EPUB_TYPE: 'noteref',
-                        'role': 'doc-noteref',
-                        'id': f'fnref{footnote_count}',
-                        # "title": f"هامش {footnote_count}",
-                        'class': 'fn nu',
-                    },
+                replacements.append(
+                    (
+                        match.start(),
+                        match.end(),
+                        self.element_as_text(self._create_footnote_link(footnote_count, number)),
+                    )
                 )
-                footnote_link.text = number
-                # new_p_content = (
-                #     str(p)[len("<p>") : match.start()]
-                #     + str(footnote_link)
-                #     + str(p)[match.start() + len(match.group()) : 0 - len("</p>")]
-                # )
-                # TODO: Find a better way to replace number with its a element,
-                #  since replacing only the first occurrence might not be the best solution
-                new_p_el = p.get().replace(number, self.element_as_text(footnote_link), 1)
-                content = Selector(text=parent.get('').replace(p.get(), new_p_el))
                 footnote_count += 1
                 new_hamesh.append(hamesh_items[number])
-        return Selector(
-            text=content.get().replace(hamesh.get(''), self.element_as_text(new_hamesh))
-        )
+            if replacements:
+                new_p_text = p_text
+                for start, end, replacement in reversed(replacements):
+                    new_p_text = new_p_text[:start] + replacement + new_p_text[end:]
+                p_replacements.append((p_text, new_p_text))
+        new_content = content.css('div').get('')
+        for original, replacement in reversed(p_replacements):
+            new_content = new_content.replace(original, replacement)
+        return Selector(text=new_content.replace(hamesh.get(''), self.element_as_text(new_hamesh)))
 
     @staticmethod
     def element_as_text(element: Element) -> str:
         element_text: str = tostring(element, encoding='utf-8').decode()
         assert isinstance(element_text, str)
-        return element_text
+        return unescape(element_text)
 
     def create_toc_depth_map(
         self, toc: list[dict[str, Any]], depth_map: dict[str, int] | None = None, depth: int = 1
@@ -301,7 +317,7 @@ class EpubItemExporter(BaseItemExporter):
                 text = self.replace_titles_with_headers(chapters_in_page, text, toc_depth_map)
                 self.add_chapter(chapters_in_page, page_filename)
             content = Selector(text=text)
-            text = self._update_hamesh(content, self._get_hamesh_items(content)).css('div').get('')
+            text = self._update_hamesh(content).css('div').get('')
             new_page = epub.EpubHtml(
                 title=page_title,
                 file_name=page_filename,
