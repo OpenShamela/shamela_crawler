@@ -17,6 +17,7 @@ HAMESH_PATTERN: Pattern = re.compile(
 )
 ARABIC_NUMBER_BETWEEN_BRACKETS_PATTERN: Pattern = re.compile(r'(?P<number>\([\u0660-\u0669]+\))')
 ARABIC_NUMBER_BETWEEN_CURLY_BRACES_PATTERN: Pattern = re.compile(r'{.+?(\([\u0660-\u0669]+\)).+?}')
+AYAH_PATTERN: Pattern = re.compile(r'﴿[\s\S]+?﴾')  # noqa: RUF001
 SPECIAL_CHARACTERS = {
     '﵀': 'رحمه الله',
     '﵏': 'رحمهم الله',
@@ -59,7 +60,6 @@ class EpubItemExporter(BaseItemExporter):
         self._default_css: epub.EpubItem = epub.EpubItem()
         self._color_styles_map: dict[str, int] = {}
         self._last_color_id: int = 0
-        self._previous_page_hamesh = ''
 
     def replace_color_styles_with_class(self, html_str: str) -> str:
         matches = CSS_STYLE_COLOR_PATTERN.findall(html_str)
@@ -75,52 +75,40 @@ class EpubItemExporter(BaseItemExporter):
             html_str = re.sub(f'style="{style}"', f'class="{color_class}"', html_str)
         return html_str
 
-    def _get_hamesh_items(self, content: Selector) -> dict[str, Element]:
-        hamesh_items: dict[str, Element] = {}
-        hamesh: SelectorList = content.css('.hamesh')
-        if not hamesh:
-            return hamesh_items
+    @staticmethod
+    def _get_hamesh_items(hamesh: SelectorList) -> dict[int, Element]:
+        #  <aside id="fn1" epub:type="footnote">
+        #  <p><a href="#fnref1" title="footnote 1">[1]</a> Text in popup</p>
+        #  </aside>
+        hamesh_items: dict[int, Element] = {}
         hamesh_counter = 0
-        hamesh_continuation = HAMESH_CONTINUATION_PATTERN.search(str(hamesh))
-        if hamesh_continuation:
-            self._previous_page_hamesh = (
-                hamesh_continuation.group('continuation')
-                if not self._previous_page_hamesh
-                else f"{self._previous_page_hamesh}\n{hamesh_continuation.group('continuation')}"
-            )
-        elif not self._previous_page_hamesh:
-            self._previous_page_hamesh = ''
-        for match in HAMESH_PATTERN.finditer(hamesh.get('')):
-            hamesh_counter += 1
-            current_hamesh = match.group('number').strip()
-            hamesh_line = match.group('content').strip()
-            #  <aside id="fn1" epub:type="footnote">
-            #  <p><a href="#fnref1" title="footnote 1">[1]</a> Text in popup</p>
-            #  </aside>
-            new_footnote_aside = Element(
-                'aside',
-                {'id': f'fn{hamesh_counter}', EPUB_TYPE: 'footnote'},
-            )
-            new_footnote_span = Element('span')
-            new_footnote_a = Element(
-                'a',
-                {
-                    'href': f'#fnref{hamesh_counter}',
-                    # "title": f"هامش {hamesh_counter}",
-                    'class': 'nu',
-                },
-            )
-            new_footnote_a.text = current_hamesh
-            if self._previous_page_hamesh:
-                new_footnote_span.text = self._previous_page_hamesh.replace('\n', '<br>')
-                new_footnote_span.append(Element('br'))
-                new_footnote_span.text = ' ' + hamesh_line.strip()
-                self._previous_page_hamesh = ''
-            else:
-                new_footnote_span.text = ' ' + hamesh_line.strip()
-            new_footnote_aside.append(new_footnote_a)
-            new_footnote_aside.append(new_footnote_span)
-            hamesh_items.update({current_hamesh: new_footnote_aside})
+        for hamesh_item in hamesh.getall():
+            _hamesh_item = hamesh_item
+            if hamesh_continuation := HAMESH_CONTINUATION_PATTERN.search(hamesh_item):
+                hamesh_text = f'{hamesh_continuation.group("continuation")}<br>'
+                for p in hamesh_item.split('<br>')[1:]:
+                    if ARABIC_NUMBER_BETWEEN_BRACKETS_PATTERN.match(p):
+                        break
+                    hamesh_text += f'{p}<br>'
+                aside = Element('aside', {'id': f'fn{hamesh_counter}', EPUB_TYPE: 'footnote'})
+                span = Element('span')
+                span.text = hamesh_text.strip()
+                aside.append(span)
+                # ٠ Arabic-Indic Digit Zero # noqa: RUF003
+                hamesh_items.update({0: aside})
+                _hamesh_item = _hamesh_item.replace(hamesh_text, '')
+            for match in HAMESH_PATTERN.finditer(_hamesh_item):
+                hamesh_counter += 1
+                current_hamesh = match.group('number').strip()
+                hamesh_line = match.group('content').strip()
+                aside = Element('aside', {'id': f'fn{hamesh_counter}', EPUB_TYPE: 'footnote'})
+                span = Element('span')
+                a = Element('a', {'href': f'#fnref{hamesh_counter}', 'class': 'nu'})
+                a.text = current_hamesh
+                span.text = ' ' + hamesh_line.strip()
+                aside.append(a)
+                aside.append(span)
+                hamesh_items.update({hamesh_counter: aside})
         return hamesh_items
 
     @staticmethod
@@ -149,14 +137,24 @@ class EpubItemExporter(BaseItemExporter):
         footnote_link.text = number
         return footnote_link
 
-    def _update_hamesh(self, content: Selector) -> Selector:
+    def _update_hamesh(self, content: Selector) -> Selector:  # noqa: C901, PLR0912
+        new_content = content.css('div').get('')
         hamesh: SelectorList = content.css('.hamesh')
         if not hamesh:
             return content
-        footnote_count = 1
-        hamesh_items: dict[str, Element] = self._get_hamesh_items(content)
+        hamesh_items: dict[int, Element] = self._get_hamesh_items(hamesh)
         new_hamesh: Element = Element('div', {'class': 'hamesh'})
+        hamesh_continuation = hamesh_items.pop(0, None)
+        if hamesh_continuation is not None:
+            new_hamesh.append(hamesh_continuation)
         p_elements: SelectorList = content.css('p:not(.hamesh)')
+        # extract ayah text to avoid wrong replacements
+        aya_matches = AYAH_PATTERN.findall(''.join(p_elements.getall()))
+        if aya_matches:
+            for idx, aya in enumerate(aya_matches, start=1):
+                new_content = new_content.replace(aya, f'PLACEHOLDER_{idx}')
+            p_elements = Selector(text=new_content).css('p:not(.hamesh)')
+        footnote_count = 1
         p_replacements = []
         for p in p_elements:
             p_text = p.get()
@@ -164,7 +162,7 @@ class EpubItemExporter(BaseItemExporter):
             replacements = []
             for match in matches:
                 number = match.group('number')
-                if hamesh_items.get(number) is None:
+                if hamesh_items.get(footnote_count) is None:
                     continue
                 if self._is_aya_match(p_text, match, number):
                     continue
@@ -175,16 +173,17 @@ class EpubItemExporter(BaseItemExporter):
                         self.element_as_text(self._create_footnote_link(footnote_count, number)),
                     )
                 )
+                new_hamesh.append(hamesh_items[footnote_count])
                 footnote_count += 1
-                new_hamesh.append(hamesh_items[number])
             if replacements:
-                new_p_text = p_text
                 for start, end, replacement in reversed(replacements):
-                    new_p_text = new_p_text[:start] + replacement + new_p_text[end:]
-                p_replacements.append((p_text, new_p_text))
-        new_content = content.css('div').get('')
+                    p_text = p_text[:start] + replacement + p_text[end:]
+                p_replacements.append((p.get(), p_text))
         for original, replacement in reversed(p_replacements):
             new_content = new_content.replace(original, replacement)
+        if aya_matches:
+            for idx, aya in enumerate(aya_matches, start=1):
+                new_content = new_content.replace(f'PLACEHOLDER_{idx}', aya)
         return Selector(text=new_content.replace(hamesh.get(''), self.element_as_text(new_hamesh)))
 
     @staticmethod
@@ -317,7 +316,7 @@ class EpubItemExporter(BaseItemExporter):
                 text = self.replace_titles_with_headers(chapters_in_page, text, toc_depth_map)
                 self.add_chapter(chapters_in_page, page_filename)
             content = Selector(text=text)
-            text = self._update_hamesh(content).css('div').get('')
+            text = self._update_hamesh(content).css('div').get()
             new_page = epub.EpubHtml(
                 title=page_title,
                 file_name=page_filename,
