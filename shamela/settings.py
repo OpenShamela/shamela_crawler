@@ -68,6 +68,7 @@ ITEM_PIPELINES = {
 }
 MAKE_JSON = False
 MAKE_EPUB = False
+UPDATE_EPUB_HAMESH = False
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

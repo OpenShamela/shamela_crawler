@@ -47,10 +47,13 @@ EPUB_TYPE = QName('http://www.idpf.org/2007/ops', 'type')
 
 
 class EpubItemExporter(BaseItemExporter):
-    def __init__(self, file: BytesIO | BinaryIO, **kwargs: Any) -> None:
+    def __init__(
+        self, file: BytesIO | BinaryIO, update_hamesh: bool = False, **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
         self.file = file
         self.book = epub.EpubBook()
+        self.update_hamesh = update_hamesh
         self._pages_count: int = 0
         self._zfill_length = 0
         self._pages: list[epub.EpubHtml] = []
@@ -316,7 +319,8 @@ class EpubItemExporter(BaseItemExporter):
                 text = self.replace_titles_with_headers(chapters_in_page, text, toc_depth_map)
                 self.add_chapter(chapters_in_page, page_filename)
             content = Selector(text=text)
-            text = self._update_hamesh(content).css('div').get()
+            if self.update_hamesh:
+                text = self._update_hamesh(content).css('div').get()
             new_page = epub.EpubHtml(
                 title=page_title,
                 file_name=page_filename,

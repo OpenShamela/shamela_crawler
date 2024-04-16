@@ -140,7 +140,8 @@ class BookJSONExportPipeline:
 
 
 class BookEPUBExportPipeline:
-    def __init__(self) -> None:
+    def __init__(self, update_hamesh: bool = False) -> None:
+        self.update_hamesh = update_hamesh
         self.exporter: BaseItemExporter | None = None
         self.file: BufferedWriter | None = None
 
@@ -148,7 +149,7 @@ class BookEPUBExportPipeline:
     def from_crawler(cls, crawler: Crawler) -> 'BookEPUBExportPipeline':
         if not crawler.settings.getbool('MAKE_EPUB'):
             raise NotConfigured
-        return cls()
+        return cls(crawler.settings.getbool('UPDATE_EPUB_HAMESH'))
 
     def close_spider(self, spider: Spider) -> None:
         if self.exporter:
@@ -166,7 +167,7 @@ class BookEPUBExportPipeline:
         if file.exists():
             file.unlink(missing_ok=True)
         self.file = file.open('wb')
-        self.exporter = EpubItemExporter(self.file)
+        self.exporter = EpubItemExporter(self.file, update_hamesh=self.update_hamesh)
         self.exporter.start_exporting()
         self.exporter.export_item(item)
         return item
