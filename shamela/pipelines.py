@@ -130,7 +130,7 @@ class BookJSONExportPipeline:
         if spider.name != 'book' or 'info' not in item or self.file:
             return item
 
-        file = Path(f"{item['info']['title']}.json")
+        file = Path(f'{item["info"]["title"]}.json')
         if file.exists():
             file.unlink(missing_ok=True)
         self.file = file.open('wb')
@@ -162,7 +162,7 @@ class BookEPUBExportPipeline:
             return item
 
         file = Path(
-            f"{item['info']['title']} - {item['info']['author']} - ({item['info']['id']}).epub"
+            f'{item["info"]["title"]} - {item["info"]["author"]} - ({item["info"]["id"]}).epub'
         )
         if file.exists():
             file.unlink(missing_ok=True)

@@ -1,27 +1,31 @@
-[tool.poetry]
+[project]
 name = "shamela_crawler"
 version = "0.1.0"
 description = "A web crawler for https://shamela.ws"
-authors = ["yshalsager <ysh-alsager@hotmail.com>"]
+authors = [{ name = "yshalsager", email = "ysh-alsager@hotmail.com" }]
+requires-python = "~=3.12"
 license = "GPL-3.0-only"
-package-mode = false
+dependencies = [
+    "Scrapy>=2.12.0,<3",
+    "sqlalchemy>=2.0.29,<3",
+    "alembic>=1.13.1,<2",
+    "tqdm>=4.66.2,<5",
+    "ebooklib>=0.18,<0.19",
+    "h2>=4.1.0,<5",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-Scrapy = "^2.11.1"
-sqlalchemy = "^2.0.29"
-alembic = "^1.13.1"
-tqdm = "^4.66.2"
-ebooklib = "^0.18"
-h2 = "^4.1.0"
+[dependency-groups]
+dev = [
+    "pre-commit>=3.6.2,<4",
+    "ruff>=0.11.0,<1",
+]
 
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^3.6.2"
-ruff = "^0.3.0"
+[tool.uv]
+package = false
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.mypy]
 files = ["shamela"]
@@ -36,7 +40,7 @@ warn_unused_ignores = true
 disallow_incomplete_defs = true
 disallow_untyped_decorators = true
 
-[tool.ruff]  # https://github.com/charliermarsh/ruff
+[tool.ruff]
 fix = true
 line-length = 100
 src = ["shamela"]
@@ -44,7 +48,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 ignore = ["E501", "S307", "RET504", "S101", "D211", "D213", "ERA001", "G004", "ISC001"]
-ignore-init-module-imports = true
 select = ["A", "B", "BLE", "C4", "C90", "DTZ", "E", "ERA", "F", "G", "I", "INP", "ISC", "N", "NPY", "PGH", "PIE", "PLC", "PLE", "PLR", "PLW", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "S", "SIM", "T10", "T20", "TID", "UP", "W", "YTT"]
 unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
 

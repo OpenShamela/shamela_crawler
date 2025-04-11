@@ -283,7 +283,7 @@ class EpubItemExporter(BaseItemExporter):
             title='بطاقة الكتاب',
             file_name='info.xhtml',
             lang='ar',
-            content=f"<html><body>{info['about']}</body></html>",
+            content=f'<html><body>{info["about"]}</body></html>',
         )
         info_page.add_item(self._default_css)
         self.book.add_item(info_page)
@@ -304,13 +304,13 @@ class EpubItemExporter(BaseItemExporter):
                 (1, ''),
             )
             page_filename = (
-                f"page{'_' if page_volume else ''}{page_volume_idx}_"
-                f"{str(page['page_number']).zfill(self._zfill_length)}.xhtml"
+                f'page{"_" if page_volume else ""}{page_volume_idx}_'
+                f'{str(page["page_number"]).zfill(self._zfill_length)}.xhtml'
             )
             footer = ''
             if page_volume:
                 footer += f'الجزء: {page_volume} - '
-            footer += f"الصفحة: {page['page']}"
+            footer += f'الصفحة: {page["page"]}'
             text = self.replace_color_styles_with_class(page['text'])
             text = SPECIAL_CHARACTERS_PATTERN.sub(
                 lambda match: SPECIAL_CHARACTERS[match.group(0)], text

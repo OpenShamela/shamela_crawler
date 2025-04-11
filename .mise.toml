@@ -1,6 +1,6 @@
 [tools]
-poetry = {version='latest', pyproject='pyproject.toml'}
 python = '3.12'
+uv = 'latest'
 
 [tasks.lint]
 description = 'Run pre-commit hooks'

@@ -104,7 +104,7 @@ class Book(Spider):
             # if current page is not the required volume, jump to required volume's first page
             if self.vol and self.vol != response.css(Selectors.PAGE_PART.value).get().strip():
                 yield Request(
-                    url=f"https://shamela.ws/book/{self.book_id}/{data['info']['volumes'][self.vol][0]}",
+                    url=f'https://shamela.ws/book/{self.book_id}/{data["info"]["volumes"][self.vol][0]}',
                     callback=self.parse_book_text,
                     meta={'data': data},
                 )
@@ -228,7 +228,7 @@ class Book(Spider):
         }
         data['info']['toc'] = self._cut_toc(data['info']['toc'], start_end)
         data['info']['volumes'] = {self.vol: start_end}
-        data['info']['title'] = f"{data['info']['title']}{' - ' if self.vol else ''}{self.vol}"
+        data['info']['title'] = f'{data["info"]["title"]}{" - " if self.vol else ""}{self.vol}'
         return data
 
     @staticmethod
@@ -241,9 +241,8 @@ class Book(Spider):
         start_end_pages = {}
         prev_volume_name = None
 
-        for volume_name in volumes:
+        for volume_name, end_page in volumes.items():
             start_page = 1 if not prev_volume_name else volumes[prev_volume_name] + 1  # type: ignore[index]
-            end_page = volumes[volume_name]
             start_end_pages[volume_name] = (start_page, end_page)
             prev_volume_name = volume_name
 
