@@ -41,7 +41,7 @@ TITLE_PATTERN = re.compile(r'<p><span class="([^"]*)">\[[^\]]*\]</span></p>')
 EPUB_CSS = (
     '*{direction: rtl}.text-center, h2{text-align: center}.hamesh{font-size: smaller}'
     '.fn{font-size: x-small;vertical-align: super;color: inherit}.nu{text-decoration: none}'
-    '.hamesh .nu{color: #008000}'
+    '.hamesh .nu{color: #008000}aside[type=footnote]{-cr-hint: non-linear-combining}'
 )
 EPUB_TYPE = QName('http://www.idpf.org/2007/ops', 'type')
 
