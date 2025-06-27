@@ -2,22 +2,22 @@
 name = "shamela_crawler"
 version = "0.1.0"
 description = "A web crawler for https://shamela.ws"
-authors = [{ name = "yshalsager", email = "ysh-alsager@hotmail.com" }]
-requires-python = "~=3.12"
+authors = [{ name = "yshalsager", email = "contact@yshalsager.com" }]
+requires-python = "~=3.13"
 license = "GPL-3.0-only"
 dependencies = [
-    "Scrapy>=2.12.0,<3",
-    "sqlalchemy>=2.0.29,<3",
-    "alembic>=1.13.1,<2",
-    "tqdm>=4.66.2,<5",
+    "alembic>=1.16.2,<2",
     "ebooklib>=0.18,<0.19",
-    "h2>=4.1.0,<5",
+    "h2>=4.2.0,<5",
+    "scrapy>=2.13.2,<3",
+    "sqlalchemy>=2.0.41,<3",
+    "tqdm>=4.67.1,<5",
 ]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=3.6.2,<4",
-    "ruff>=0.11.0,<1",
+    "pre-commit>=3.7.0,<4",
+    "ruff>=0.12.1,<1",
 ]
 
 [tool.uv]
@@ -44,7 +44,7 @@ disallow_untyped_decorators = true
 fix = true
 line-length = 100
 src = ["shamela"]
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 ignore = ["E501", "S307", "RET504", "S101", "D211", "D213", "ERA001", "G004", "ISC001"]
