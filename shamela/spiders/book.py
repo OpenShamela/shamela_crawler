@@ -44,9 +44,7 @@ class Book(Spider):
         self.start_urls = [f'https://shamela.ws/book/{book_id}']
         self.vol = vol
 
-    def parse(
-        self, response: Response, **kwargs: Any
-    ) -> Generator[dict[str, str | int], None, None]:
+    def parse(self, response: Response, **kwargs: Any) -> Generator[dict[str, str | int]]:
         html = response.css(Selectors.PAGE_CONTENT.value)
         html.css(Selectors.SEARCH.value).drop()  # Remove "Search" button
         toc_el = html.css(Selectors.INDEX.value)
@@ -71,7 +69,7 @@ class Book(Spider):
 
     def parse_book_text(  # noqa: C901, PLR0912
         self, response: Response, **kwargs: Any
-    ) -> Generator[dict[str, str | int], None, None]:
+    ) -> Generator[dict[str, str | int]]:
         """
         Parse the book text pages
         :param response:
@@ -95,7 +93,9 @@ class Book(Spider):
                     volumes[part.css('::text').get()] = int(
                         part.css('::attr(href)').re_first(r'(\d+)#')
                     )
-                data['info']['volumes'] = self._get_start_end_pages(volumes)
+                data['info']['volumes'] = self._get_start_end_pages(
+                    volumes, data['info']['all_pages']
+                )
             # Check if the required volume is valid
             if self.vol and not response.css(f'{Selectors.PAGE_PARTS_MENU.value} li a::text')[
                 1:
@@ -232,18 +232,36 @@ class Book(Spider):
         return data
 
     @staticmethod
-    def _get_start_end_pages(volumes: dict[str, int]) -> dict[str, tuple[int, int]]:
+    def _get_start_end_pages(volumes: dict[str, int], pages: int) -> dict[str, tuple[int, int]]:
         """
-        Get start and end pages for each volume
-        :param volumes: dict of volumes and their last page number
-        :return: dict of volumes and their start and end pages
-        """
-        start_end_pages = {}
-        prev_volume_name = None
+        Calculate start and end pages for each volume.
 
-        for volume_name, end_page in volumes.items():
-            start_page = 1 if not prev_volume_name else volumes[prev_volume_name] + 1  # type: ignore[index]
+        :param volumes: dict mapping volume names to their starting page numbers
+        :param pages: total number of pages in the book
+        :return: dict mapping volume names to (start_page, end_page) tuples
+        """
+        if not volumes:
+            return {}
+
+        start_end_pages = {}
+
+        # Sort volume names - try numeric sorting first, fall back to sorting by page number
+        def sort_key(volume_name: str) -> tuple[int, str]:
+            try:
+                return (int(volume_name), volume_name)
+            except ValueError:
+                return (volumes[volume_name], volume_name)
+
+        sorted_volume_names = sorted(volumes.keys(), key=sort_key)
+        for i, volume_name in enumerate(sorted_volume_names, start=1):
+            start_page = volumes[volume_name]
+
+            if i < len(sorted_volume_names):
+                next_volume_name = sorted_volume_names[i]
+                end_page = volumes[next_volume_name] - 1
+            else:
+                end_page = pages
+
             start_end_pages[volume_name] = (start_page, end_page)
-            prev_volume_name = volume_name
 
         return start_end_pages
