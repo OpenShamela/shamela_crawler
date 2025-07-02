@@ -299,7 +299,7 @@ class EpubItemExporter(BaseItemExporter):
                 (
                     (index, k)
                     for index, (k, v) in enumerate(info['volumes'].items())
-                    if v[0] <= page['page'] <= v[1]
+                    if v[0] <= page['page_number'] <= v[1]
                 ),
                 (1, ''),
             )
