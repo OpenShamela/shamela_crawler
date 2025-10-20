@@ -3,7 +3,7 @@ name = "shamela_crawler"
 version = "0.1.0"
 description = "A web crawler for https://shamela.ws"
 authors = [{ name = "yshalsager", email = "contact@yshalsager.com" }]
-requires-python = "~=3.13"
+requires-python = ">=3.13, <3.14"
 license = "GPL-3.0-only"
 dependencies = [
     "alembic>=1.16.2,<2",
